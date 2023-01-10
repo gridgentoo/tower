@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A retry “budget” for allowing only a certain amount of retries over time."><meta name="keywords" content="rust, rustlang, rust-lang, budget"><title>tower::retry::budget - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-04897efae0a76fcd.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../../../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/main-bc1b32400f872ddb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../../../tower/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../../../tower/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Module budget</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1 class="fqn">Module <a href="../../index.html">tower</a>::<wbr><a href="../index.html">retry</a>::<wbr><a class="mod" href="#">budget</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../../../src/tower/retry/budget/mod.rs.html#1-91">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><span class="item-info"><div class="stab portability">Available on <strong>crate feature <code>retry</code></strong> only.</div></span><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A retry “budget” for allowing only a certain amount of retries over time.</p>
+<h2 id="why-budgets-and-not-max-retries"><a href="#why-budgets-and-not-max-retries">Why budgets and not max retries?</a></h2>
+<p>The most common way of configuring retries is to specify a maximum
+number of retry attempts to perform before giving up. This is a familiar idea to anyone
+who’s used a web browser: you try to load a webpage, and if it doesn’t load, you try again.
+If it still doesn’t load, you try a third time. Finally you give up.</p>
+<p>Unfortunately, there are at least two problems with configuring retries this way:</p>
+<p><strong>Choosing the maximum number of retry attempts is a guessing game.</strong>
+You need to pick a number that’s high enough to make a difference when things are somewhat failing,
+but not so high that it generates extra load on the system when it’s really failing. In practice,
+you usually pick a maximum retry attempts number out of a hat (e.g. 3) and hope for the best.</p>
+<p><strong>Systems configured this way are vulnerable to retry storms.</strong>
+A retry storm begins when one service starts to experience a larger than normal failure rate.
+This causes its clients to retry those failed requests. The extra load from the retries causes the
+service to slow down further and fail more requests, triggering more retries. If each client is
+configured to retry up to 3 times, this can quadruple the number of requests being sent! To make
+matters even worse, if any of the clients’ clients are configured with retries, the number of retries
+compounds multiplicatively and can turn a small number of errors into a self-inflicted denial of service attack.</p>
+<p>It’s generally dangerous to implement retries without some limiting factor. <a href="trait.Budget.html" title="Budget"><code>Budget</code></a>s are that limit.</p>
+<h2 id="examples"><a href="#examples">Examples</a></h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>futures_util::future;
+<span class="kw">use </span>tower::retry::{budget::{Budget, TpsBudget}, Policy};
+
+<span class="kw">type </span>Req = String;
+<span class="kw">type </span>Res = String;
+
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">struct </span>RetryPolicy {
+    budget: Arc&lt;TpsBudget&gt;,
+}
+
+<span class="kw">impl</span>&lt;E&gt; Policy&lt;Req, Res, E&gt; <span class="kw">for </span>RetryPolicy {
+    <span class="kw">type </span>Future = future::Ready&lt;()&gt;;
+
+    <span class="kw">fn </span>retry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, req: <span class="kw-2">&amp;mut </span>Req, result: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Result</span>&lt;Res, E&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Future&gt; {
+        <span class="kw">match </span>result {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                <span class="comment">// Treat all `Response`s as success,
+                // so deposit budget and don&#39;t retry...
+                </span><span class="self">self</span>.budget.deposit();
+                <span class="prelude-val">None
+            </span>}
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+                <span class="comment">// Treat all errors as failures...
+                // Withdraw the budget, don&#39;t retry if we overdrew.
+                </span><span class="kw">let </span>withdrew = <span class="self">self</span>.budget.withdraw();
+                <span class="kw">if </span>!withdrew {
+                    <span class="kw">return </span><span class="prelude-val">None</span>;
+                }
+
+                <span class="comment">// Try again!
+                </span><span class="prelude-val">Some</span>(future::ready(()))
+            }
+        }
+    }
+
+    <span class="kw">fn </span>clone_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, req: <span class="kw-2">&amp;</span>Req) -&gt; <span class="prelude-ty">Option</span>&lt;Req&gt; {
+        <span class="prelude-val">Some</span>(req.clone())
+    }
+}</code></pre></div>
+</div></details><h2 id="reexports" class="small-section-header"><a href="#reexports">Re-exports</a></h2><div class="item-table"><div class="item-row"><div class="item-left import-item" id="reexport.TpsBudget"><code>pub use tps_budget::<a class="struct" href="tps_budget/struct.TpsBudget.html" title="struct tower::retry::budget::tps_budget::TpsBudget">TpsBudget</a>;</code></div></div></div><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="mod" href="tps_budget/index.html" title="tower::retry::budget::tps_budget mod">tps_budget</a></div><div class="item-right docblock-short">Transactions Per Minute (Tps) Budget implementations</div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.Budget.html" title="tower::retry::budget::Budget trait">Budget</a></div><div class="item-right docblock-short">For more info about <a href="trait.Budget.html" title="Budget"><code>Budget</code></a>, please see the <a href="index.html">module-level documentation</a>.</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tower" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (3020239de 2023-01-09)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>

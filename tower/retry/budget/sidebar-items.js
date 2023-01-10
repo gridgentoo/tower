@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["tps_budget","Transactions Per Minute (Tps) Budget implementations"]],"trait":[["Budget","For more info about [`Budget`], please see the module-level documentation."]]};

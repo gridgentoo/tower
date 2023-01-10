@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["TpsBudget","A Transactions Per Minute config for managing retry tokens."]]};
